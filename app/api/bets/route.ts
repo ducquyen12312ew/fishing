@@ -72,11 +72,16 @@ export async function POST(request: Request) {
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const camp = campaign as any
-    if (camp.currentCoins < Number(amount)) {
-      return NextResponse.json({ error: 'Not enough coins' }, { status: 400 })
-    }
 
     const fishImage = getFishImage(Number(amount))
+
+    // Check available coins = current minus all pending bets already running
+    const pendingBets = await Bet.find({ campaignId: camp._id, status: 'pending' }).lean()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const pendingTotal = pendingBets.reduce((sum: number, b: any) => sum + b.amount, 0)
+    if (camp.currentCoins - pendingTotal < Number(amount)) {
+      return NextResponse.json({ error: 'Not enough coins' }, { status: 400 })
+    }
 
     const bet = await Bet.create({
       campaignId: camp._id,
@@ -86,16 +91,7 @@ export async function POST(request: Request) {
       fishImage,
     })
 
-    await Campaign.findByIdAndUpdate(camp._id, {
-      $inc: { currentCoins: -Number(amount), totalLose: Number(amount) },
-    })
-
-    await CoinHistory.create({
-      campaignId: camp._id,
-      type:       'lose',
-      amount:     Number(amount),
-      note:       `Bait: ${name}`,
-    })
+    // Coins are NOT deducted on placement — only when the bet is resolved as lost
 
     const saved = await Bet.findById(bet._id).lean()
     return NextResponse.json(shapeBet(saved), { status: 201 })

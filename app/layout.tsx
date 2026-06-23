@@ -12,6 +12,9 @@ const silkscreen = Silkscreen({
 export const metadata: Metadata = {
   title: 'A Fishing Day',
   description: 'Personal bet tracking — pixel art style',
+  icons: {
+    icon: '/fish/fish3.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

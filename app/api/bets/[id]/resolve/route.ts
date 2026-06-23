@@ -31,25 +31,38 @@ export async function PATCH(
     await bet.save()
 
     if (result === 'won') {
-      // Only the PROFIT is credited back — stake was already deducted when placing
-      const profit = Math.round(bet.amount * (bet.odds - 1))
+      const profit     = Math.round(bet.amount * (bet.odds - 1))
+      const fullReturn = bet.amount + profit  // stake + profit returned to balance
 
       await Campaign.findByIdAndUpdate(bet.campaignId, {
         $inc: {
-          currentCoins: profit,      // add only profit
+          currentCoins: fullReturn,
           totalWin:     profit,
-          totalLose:    -bet.amount, // reverse the deduction counted at placement
         },
       })
 
       await CoinHistory.create({
         campaignId: bet.campaignId,
         type:       'win',
-        amount:     profit,
+        amount:     fullReturn,
         note:       `Won: ${bet.name}`,
       })
+    } else {
+      // Lost: deduct stake and record loss now (was NOT deducted at placement)
+      await Campaign.findByIdAndUpdate(bet.campaignId, {
+        $inc: {
+          currentCoins: -bet.amount,
+          totalLose:     bet.amount,
+        },
+      })
+
+      await CoinHistory.create({
+        campaignId: bet.campaignId,
+        type:       'lose',
+        amount:     bet.amount,
+        note:       `Lost: ${bet.name}`,
+      })
     }
-    // On 'lost': nothing to do — currentCoins & totalLose already updated when the bet was placed
 
     return NextResponse.json({
       id:          String(bet._id),
