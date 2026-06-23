@@ -31,6 +31,11 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
   const [deleting, setDeleting]           = useState(false)
 
+  // edit balance state
+  const [editBalanceId, setEditBalanceId]   = useState<string | null>(null)
+  const [editBalanceVal, setEditBalanceVal] = useState('')
+  const [savingBalance, setSavingBalance]   = useState(false)
+
   // merge state
   const [mergeMode, setMergeMode]     = useState(false)
   const [selected, setSelected]       = useState<Set<string>>(new Set())
@@ -102,6 +107,29 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
     } catch { /* ignore */ } finally {
       setDeleting(false)
       setConfirmDelete(null)
+    }
+  }
+
+  async function saveBalance(id: string) {
+    const val = parseInt(editBalanceVal)
+    if (isNaN(val) || val < 0) return
+    setSavingBalance(true)
+    try {
+      const res = await fetch(`/api/campaigns/${id}`, {
+        method:  'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ current_coins: val }),
+      })
+      if (res.ok) {
+        setCampaigns((prev) =>
+          prev.map((c) => c.id === id ? { ...c, current_coins: val } : c)
+        )
+        onCampaignChange()
+      }
+    } catch { /* ignore */ } finally {
+      setSavingBalance(false)
+      setEditBalanceId(null)
+      setEditBalanceVal('')
     }
   }
 
@@ -376,6 +404,45 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
                   {/* Actions (hidden in merge mode) */}
                   {!mergeMode && (
                     <div className="flex items-center gap-2 flex-shrink-0">
+                      {/* Edit balance */}
+                      {editBalanceId === c.id ? (
+                        <div className="flex gap-1 items-center">
+                          <input
+                            type="number"
+                            value={editBalanceVal}
+                            onChange={(e) => setEditBalanceVal(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') saveBalance(c.id)
+                              if (e.key === 'Escape') { setEditBalanceId(null); setEditBalanceVal('') }
+                            }}
+                            autoFocus
+                            min="0"
+                            className="w-20 px-2 py-1 bg-white/10 border border-teal-light rounded text-white text-xs font-pixel outline-none focus:border-yellow-300"
+                          />
+                          <button
+                            onClick={() => saveBalance(c.id)}
+                            disabled={savingBalance}
+                            className="px-2 py-1 bg-teal-dark hover:bg-teal-DEFAULT text-white font-pixel text-xs rounded border border-teal-light disabled:opacity-50"
+                          >
+                            {savingBalance ? '...' : '✓'}
+                          </button>
+                          <button
+                            onClick={() => { setEditBalanceId(null); setEditBalanceVal('') }}
+                            className="px-2 py-1 border border-white/30 text-white/50 font-pixel text-xs rounded"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => { setEditBalanceId(c.id); setEditBalanceVal(String(c.current_coins)) }}
+                          className="w-7 h-7 flex items-center justify-center text-white/30 hover:text-yellow-300 transition-colors font-pixel text-sm"
+                          title="Sửa balance"
+                        >
+                          ✏️
+                        </button>
+                      )}
+
                       {/* Delete */}
                       {confirmDelete === c.id ? (
                         <div className="flex gap-1">
