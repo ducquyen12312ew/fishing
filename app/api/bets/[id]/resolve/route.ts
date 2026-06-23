@@ -12,7 +12,7 @@ export async function PATCH(
     const { id } = await params
     const { result } = await request.json()
 
-    if (!['won', 'lost'].includes(result)) {
+    if (!['won', 'lost', 'refunded'].includes(result)) {
       return NextResponse.json({ error: 'Invalid result' }, { status: 400 })
     }
 
@@ -47,8 +47,7 @@ export async function PATCH(
         amount:     fullReturn,
         note:       `Won: ${bet.name}`,
       })
-    } else {
-      // Lost: deduct stake and record loss now (was NOT deducted at placement)
+    } else if (result === 'lost') {
       await Campaign.findByIdAndUpdate(bet.campaignId, {
         $inc: {
           currentCoins: -bet.amount,
@@ -61,6 +60,18 @@ export async function PATCH(
         type:       'lose',
         amount:     bet.amount,
         note:       `Lost: ${bet.name}`,
+      })
+    } else {
+      // Refunded: return the stake, no profit or loss
+      await Campaign.findByIdAndUpdate(bet.campaignId, {
+        $inc: { currentCoins: bet.amount },
+      })
+
+      await CoinHistory.create({
+        campaignId: bet.campaignId,
+        type:       'refund',
+        amount:     bet.amount,
+        note:       `Refunded: ${bet.name}`,
       })
     }
 

@@ -16,13 +16,13 @@ interface Bet {
 interface ConfirmBetModalProps {
   bet: Bet
   onClose: () => void
-  onResolved: (id: number, result: 'won' | 'lost') => void
+  onResolved: (id: number, result: 'won' | 'lost' | 'refunded') => void
 }
 
 export default function ConfirmBetModal({ bet, onClose, onResolved }: ConfirmBetModalProps) {
   const [loading, setLoading] = useState(false)
 
-  async function resolve(result: 'won' | 'lost') {
+  async function resolve(result: 'won' | 'lost' | 'refunded') {
     setLoading(true)
     try {
       const res = await fetch(`/api/bets/${bet.id}/resolve`, {
@@ -92,7 +92,7 @@ export default function ConfirmBetModal({ bet, onClose, onResolved }: ConfirmBet
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-2">
             <button
               onClick={() => resolve('won')}
               disabled={loading}
@@ -106,6 +106,13 @@ export default function ConfirmBetModal({ bet, onClose, onResolved }: ConfirmBet
               className="flex-1 py-3 bg-coral hover:bg-coral-dark disabled:opacity-50 text-white font-pixel text-xs rounded border-2 border-coral-dark transition-colors"
             >
               💨 Missed...
+            </button>
+            <button
+              onClick={() => resolve('refunded')}
+              disabled={loading}
+              className="flex-1 py-3 bg-blue-700 hover:bg-blue-600 disabled:opacity-50 text-white font-pixel text-xs rounded border-2 border-blue-400 transition-colors"
+            >
+              🔄 Refund
             </button>
           </div>
         </div>

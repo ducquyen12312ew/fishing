@@ -7,7 +7,7 @@ export interface IBet extends Document {
   amount: number
   odds: number
   fishImage: string
-  status: 'pending' | 'won' | 'lost'
+  status: 'pending' | 'won' | 'lost' | 'refunded'
   createdAt: Date
   resolvedAt?: Date
 }
@@ -19,7 +19,7 @@ const BetSchema = new Schema<IBet>({
   amount:      { type: Number, required: true },
   odds:        { type: Number, required: true },
   fishImage:   { type: String, required: true },
-  status:      { type: String, enum: ['pending', 'won', 'lost'], default: 'pending' },
+  status:      { type: String, enum: ['pending', 'won', 'lost', 'refunded'], default: 'pending' },
   createdAt:   { type: Date, default: Date.now },
   resolvedAt:  { type: Date },
 })

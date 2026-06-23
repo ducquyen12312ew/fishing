@@ -114,7 +114,7 @@ export default function HomePage() {
     setBets((prev) => [bet, ...prev])
   }
 
-  function handleBetResolved(id: number, result: 'won' | 'lost') {
+  function handleBetResolved(id: number, result: 'won' | 'lost' | 'refunded') {
     if (result === 'won') setBasketFish((prev) => [...prev, Date.now()])
 
     setLeavingIds((prev) => new Set(prev).add(id))

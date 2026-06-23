@@ -37,7 +37,7 @@ export async function GET(request: Request) {
 
     let filter: Record<string, unknown> = {}
     if (status === 'pending')  filter = { status: 'pending' }
-    if (status === 'resolved') filter = { status: { $in: ['won', 'lost'] } }
+    if (status === 'resolved') filter = { status: { $in: ['won', 'lost', 'refunded'] } }
 
     const bets = await Bet.find(filter)
       .populate('campaignId', 'name')
