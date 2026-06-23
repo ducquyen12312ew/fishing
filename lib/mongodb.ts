@@ -14,14 +14,24 @@ const cached: MongooseCache = global._mongoose ?? { conn: null, promise: null }
 global._mongoose = cached
 
 export async function connectDB(): Promise<typeof mongoose> {
-  // Validate at call-time (runtime), not module-load time (build time)
   const uri = process.env.MONGODB_URI
-  if (!uri) throw new Error('MONGODB_URI is not defined in environment variables')
+  if (!uri) throw new Error('MONGODB_URI env var is not set')
 
   if (cached.conn) return cached.conn
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(uri, { bufferCommands: false })
+    cached.promise = mongoose
+      .connect(uri, {
+        bufferCommands: false,
+        serverSelectionTimeoutMS: 10_000,
+        connectTimeoutMS: 10_000,
+        socketTimeoutMS: 20_000,
+      })
+      .catch((err) => {
+        // Reset so the next request retries instead of hanging forever
+        cached.promise = null
+        throw err
+      })
   }
 
   cached.conn = await cached.promise

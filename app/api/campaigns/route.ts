@@ -1,38 +1,42 @@
 import { NextResponse } from 'next/server'
 import { connectDB } from '@/lib/mongodb'
-import Campaign, { ICampaign } from '@/models/Campaign'
+import Campaign from '@/models/Campaign'
 import CoinHistory from '@/models/CoinHistory'
 
-// Shape to snake_case for frontend compatibility
-function shape(c: ICampaign & { _id: unknown }) {
+// lean() returns plain objects — use 'any' to avoid Mongoose generic type issues
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function shape(c: any) {
   return {
-    id:           String(c._id),
-    _id:          String(c._id),
-    name:         c.name,
-    initial_coins: c.initialCoins,
-    current_coins: c.currentCoins,
-    total_win:    c.totalWin,
-    total_lose:   c.totalLose,
-    is_active:    c.isActive,
-    created_at:   c.createdAt,
+    id:            String(c._id),
+    _id:           String(c._id),
+    name:          c.name          as string,
+    initial_coins: c.initialCoins  as number,
+    current_coins: c.currentCoins  as number,
+    total_win:     (c.totalWin     ?? 0) as number,
+    total_lose:    (c.totalLose    ?? 0) as number,
+    is_active:     (c.isActive     ?? false) as boolean,
+    created_at:    c.createdAt,
   }
 }
 
 export async function GET() {
   try {
     await connectDB()
-    const rows = await Campaign.find().sort({ createdAt: -1 }).lean<ICampaign[]>()
+    const rows = await Campaign.find().sort({ createdAt: -1 }).lean()
     return NextResponse.json(rows.map(shape))
   } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: 'Failed to fetch campaigns' }, { status: 500 })
+    console.error('[GET /api/campaigns]', err)
+    return NextResponse.json(
+      { error: 'Failed to fetch campaigns', detail: String(err) },
+      { status: 500 }
+    )
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const name         = body.name
+    const body          = await request.json()
+    const name          = body.name
     const initial_coins = body.initial_coins ?? body.initialCoins
 
     if (!name || !initial_coins) {
@@ -43,21 +47,24 @@ export async function POST(request: Request) {
 
     const campaign = await Campaign.create({
       name,
-      initialCoins: initial_coins,
-      currentCoins: initial_coins,
+      initialCoins: Number(initial_coins),
+      currentCoins: Number(initial_coins),
     })
 
     await CoinHistory.create({
       campaignId: campaign._id,
       type:       'deposit',
-      amount:     initial_coins,
+      amount:     Number(initial_coins),
       note:       'Initial deposit',
     })
 
-    const saved = await Campaign.findById(campaign._id).lean<ICampaign>()
-    return NextResponse.json(shape(saved!), { status: 201 })
+    const saved = await Campaign.findById(campaign._id).lean()
+    return NextResponse.json(shape(saved), { status: 201 })
   } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: 'Failed to create campaign' }, { status: 500 })
+    console.error('[POST /api/campaigns]', err)
+    return NextResponse.json(
+      { error: 'Failed to create campaign', detail: String(err) },
+      { status: 500 }
+    )
   }
 }

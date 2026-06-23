@@ -5,6 +5,29 @@ import Bet from '@/models/Bet'
 import CoinHistory from '@/models/CoinHistory'
 import { getFishImage } from '@/lib/db'
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function shapeBet(b: any) {
+  const campaignName =
+    b.campaignId && typeof b.campaignId === 'object' && 'name' in b.campaignId
+      ? (b.campaignId as { name: string }).name
+      : ''
+
+  return {
+    id:            String(b._id),
+    _id:           String(b._id),
+    campaign_id:   String(b.campaignId?._id ?? b.campaignId),
+    campaign_name: campaignName,
+    sport_emoji:   b.sportEmoji  as string,
+    name:          b.name        as string,
+    amount:        b.amount      as number,
+    odds:          b.odds        as number,
+    fish_image:    b.fishImage   as string,
+    status:        b.status      as string,
+    created_at:    b.createdAt,
+    resolved_at:   b.resolvedAt ?? null,
+  }
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -12,88 +35,76 @@ export async function GET(request: Request) {
 
     await connectDB()
 
-    let query: Record<string, unknown> = {}
-    if (status === 'pending') {
-      query = { status: 'pending' }
-    } else if (status === 'resolved') {
-      query = { status: { $in: ['won', 'lost'] } }
-    }
+    let filter: Record<string, unknown> = {}
+    if (status === 'pending')  filter = { status: 'pending' }
+    if (status === 'resolved') filter = { status: { $in: ['won', 'lost'] } }
 
-    const bets = await Bet.find(query)
+    const bets = await Bet.find(filter)
       .populate('campaignId', 'name')
       .sort(status === 'resolved' ? { resolvedAt: -1 } : { createdAt: -1 })
       .lean()
 
-    // Flatten campaignId → campaign_name for frontend compatibility
-    const shaped = bets.map((b) => ({
-      ...b,
-      id: b._id,
-      campaign_name:
-        b.campaignId && typeof b.campaignId === 'object' && 'name' in b.campaignId
-          ? (b.campaignId as { name: string }).name
-          : '',
-      sport_emoji: b.sportEmoji,
-      fish_image: b.fishImage,
-    }))
-
-    return NextResponse.json(shaped)
+    return NextResponse.json(bets.map(shapeBet))
   } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: 'Failed to fetch bets' }, { status: 500 })
+    console.error('[GET /api/bets]', err)
+    return NextResponse.json(
+      { error: 'Failed to fetch bets', detail: String(err) },
+      { status: 500 }
+    )
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const { sport_emoji, name, amount, odds } = await request.json()
+    const body = await request.json()
+    const { sport_emoji, name, amount, odds } = body
+
     if (!sport_emoji || !name || !amount || !odds) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
 
     await connectDB()
 
-    const campaign = await Campaign.findOne({ isActive: true })
+    const campaign = await Campaign.findOne({ isActive: true }).lean()
     if (!campaign) {
       return NextResponse.json({ error: 'No active campaign' }, { status: 400 })
     }
-    if (campaign.currentCoins < amount) {
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const camp = campaign as any
+    if (camp.currentCoins < Number(amount)) {
       return NextResponse.json({ error: 'Not enough coins' }, { status: 400 })
     }
 
-    const fishImage = getFishImage(amount)
+    const fishImage = getFishImage(Number(amount))
 
     const bet = await Bet.create({
-      campaignId: campaign._id,
+      campaignId: camp._id,
       sportEmoji: sport_emoji,
       name,
-      amount,
-      odds,
+      amount:     Number(amount),
+      odds:       Number(odds),
       fishImage,
     })
 
-    await Campaign.findByIdAndUpdate(campaign._id, {
-      $inc: { currentCoins: -amount, totalLose: amount },
+    await Campaign.findByIdAndUpdate(camp._id, {
+      $inc: { currentCoins: -Number(amount), totalLose: Number(amount) },
     })
 
     await CoinHistory.create({
-      campaignId: campaign._id,
-      type: 'lose',
-      amount,
-      note: `Bait: ${name}`,
+      campaignId: camp._id,
+      type:       'lose',
+      amount:     Number(amount),
+      note:       `Bait: ${name}`,
     })
 
-    // Return shaped for frontend
-    return NextResponse.json(
-      {
-        ...bet.toObject(),
-        id: bet._id,
-        sport_emoji: bet.sportEmoji,
-        fish_image: bet.fishImage,
-      },
-      { status: 201 }
-    )
+    const saved = await Bet.findById(bet._id).lean()
+    return NextResponse.json(shapeBet(saved), { status: 201 })
   } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: 'Failed to create bet' }, { status: 500 })
+    console.error('[POST /api/bets]', err)
+    return NextResponse.json(
+      { error: 'Failed to create bet', detail: String(err) },
+      { status: 500 }
+    )
   }
 }

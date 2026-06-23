@@ -20,40 +20,46 @@ export async function PATCH(
 
     const bet = await Bet.findOne({ _id: id, status: 'pending' })
     if (!bet) {
-      return NextResponse.json({ error: 'Bet not found or already resolved' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Bet not found or already resolved' },
+        { status: 404 }
+      )
     }
 
-    bet.status = result
+    bet.status     = result
     bet.resolvedAt = new Date()
     await bet.save()
 
     if (result === 'won') {
       const winAmount = Math.round(bet.amount * bet.odds)
-
       await Campaign.findByIdAndUpdate(bet.campaignId, {
         $inc: {
           currentCoins: winAmount,
-          totalWin: winAmount,
-          totalLose: -bet.amount,
+          totalWin:     winAmount,
+          totalLose:    -bet.amount,
         },
       })
-
       await CoinHistory.create({
         campaignId: bet.campaignId,
-        type: 'win',
-        amount: winAmount,
-        note: `Won: ${bet.name}`,
+        type:       'win',
+        amount:     winAmount,
+        note:       `Won: ${bet.name}`,
       })
     }
 
     return NextResponse.json({
-      ...bet.toObject(),
-      id: bet._id,
+      id:          String(bet._id),
       sport_emoji: bet.sportEmoji,
-      fish_image: bet.fishImage,
+      fish_image:  bet.fishImage,
+      status:      bet.status,
+      amount:      bet.amount,
+      odds:        bet.odds,
     })
   } catch (err) {
-    console.error(err)
-    return NextResponse.json({ error: 'Failed to resolve bet' }, { status: 500 })
+    console.error('[PATCH /api/bets/resolve]', err)
+    return NextResponse.json(
+      { error: 'Failed to resolve bet', detail: String(err) },
+      { status: 500 }
+    )
   }
 }
