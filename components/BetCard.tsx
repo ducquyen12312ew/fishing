@@ -5,7 +5,7 @@ import Image from 'next/image'
 
 export interface Bet {
   id: number
-  sport_emoji: string
+  sport_emoji?: string
   name: string
   amount: number
   odds: number
@@ -57,8 +57,10 @@ export default function BetCard({ bet, isNew, isLeaving, onClick, compact }: Bet
         }}
       />
 
-      {/* Sport emoji */}
-      <span className="text-xl flex-shrink-0 relative z-10">{bet.sport_emoji}</span>
+      {/* Sport emoji (legacy bets only) */}
+      {bet.sport_emoji && (
+        <span className="text-xl flex-shrink-0 relative z-10">{bet.sport_emoji}</span>
+      )}
 
       {/* Name + amount */}
       <div className="flex-1 min-w-0 relative z-10">

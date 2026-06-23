@@ -1,16 +1,19 @@
 'use client'
 
-export default function Rabbit() {
+interface RabbitProps {
+  src?: string
+}
+
+export default function Rabbit({ src = '/rabbit.png' }: RabbitProps) {
   return (
     <img
-      src="/rabbit.png"
-      alt="fishing rabbit"
+      src={src}
+      alt="rabbit"
       style={{
         imageRendering: 'pixelated',
         maxHeight: '220px',
         width: 'auto',
         display: 'block',
-        // bob animation is applied via the parent's absolute positioning style
       }}
       draggable={false}
     />

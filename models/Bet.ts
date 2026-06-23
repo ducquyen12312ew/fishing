@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Model, Types } from 'mongoose'
 
 export interface IBet extends Document {
   campaignId: Types.ObjectId
-  sportEmoji: string
+  sportEmoji?: string
   name: string
   amount: number
   odds: number
@@ -14,7 +14,7 @@ export interface IBet extends Document {
 
 const BetSchema = new Schema<IBet>({
   campaignId:  { type: Schema.Types.ObjectId, ref: 'Campaign', required: true },
-  sportEmoji:  { type: String, required: true },
+  sportEmoji:  { type: String, required: false },
   name:        { type: String, required: true },
   amount:      { type: Number, required: true },
   odds:        { type: Number, required: true },

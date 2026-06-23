@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import CoinSprite from './CoinSprite'
-import SportSelect from './SportSelect'
 
 interface AddBetModalProps {
   onClose: () => void
@@ -10,7 +9,6 @@ interface AddBetModalProps {
 }
 
 export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
-  const [emoji, setEmoji]     = useState('')
   const [name, setName]       = useState('')
   const [amount, setAmount]   = useState('')
   const [odds, setOdds]       = useState('')
@@ -19,8 +17,8 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!emoji || !name || !amount || !odds) {
-      setError('Please fill in all fields!')
+    if (!name || !amount || !odds) {
+      setError('MISSING FIELDS')
       return
     }
     setLoading(true)
@@ -30,18 +28,17 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body:    JSON.stringify({
-          sport_emoji: emoji,
           name,
           amount: parseInt(amount),
           odds:   parseFloat(odds),
         }),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error || 'Unknown error'); return }
+      if (!res.ok) { setError(data.error || 'UNKNOWN ERROR'); return }
       onSuccess(data)
       onClose()
     } catch {
-      setError('Connection error')
+      setError('CONNECTION ERROR')
     } finally {
       setLoading(false)
     }
@@ -56,36 +53,74 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
       className="fixed inset-0 z-50 flex items-center justify-center"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
 
-      <div className="relative z-10 w-full max-w-md mx-4 bg-[#0f2b2d] border-4 border-teal-light rounded-lg shadow-2xl animate-modalIn">
-        <div className="bg-teal-dark px-6 py-4 border-b-4 border-teal-light flex items-center justify-between">
-          <h2 className="font-pixel text-white text-sm">New Contract</h2>
-          <button onClick={onClose} className="text-white/70 hover:text-white font-pixel text-xs">✕</button>
+      <div
+        className="relative z-10 w-full max-w-md mx-4 animate-modalIn"
+        style={{
+          background:  'rgba(10,20,30,0.95)',
+          border:      '2px solid #00ff88',
+          boxShadow:   '0 0 20px rgba(0,255,136,0.3), 0 0 60px rgba(0,255,136,0.1)',
+          borderRadius: '8px',
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            padding:      '14px 20px',
+            borderBottom: '1px solid #00ff8844',
+            display:      'flex',
+            alignItems:   'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <span style={{ fontFamily: 'monospace', fontSize: '1rem', fontWeight: 900, color: '#00ff88', letterSpacing: '0.1em' }}>
+            [ NEW CONTRACT ]
+          </span>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#00ff8888', fontFamily: 'monospace', fontSize: '1rem' }}
+            onMouseEnter={(e) => (e.currentTarget.style.color = '#00ff88')}
+            onMouseLeave={(e) => (e.currentTarget.style.color = '#00ff8888')}
+          >
+            ✕
+          </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Contract Name */}
           <div>
-            <label className="block font-pixel text-teal-light text-xs mb-2">Sport</label>
-            <SportSelect value={emoji} onChange={setEmoji} />
-          </div>
-
-          <div>
-            <label className="block font-pixel text-teal-light text-xs mb-2">Contract Name</label>
+            <label style={{ display: 'block', fontFamily: 'monospace', fontSize: '0.7rem', color: '#88ffcc', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '6px' }}>
+              Contract Name
+            </label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Man City vs Arsenal"
-              className="w-full px-3 py-2 bg-white/10 border-2 border-teal-light rounded text-white text-xs font-pixel placeholder:text-white/30 outline-none focus:border-yellow-300 transition-colors"
+              style={{
+                width:       '100%',
+                padding:     '8px 12px',
+                background:  '#1a2a1a',
+                border:      '1px solid #00ff88',
+                borderRadius: '4px',
+                color:       '#00ff88',
+                fontFamily:  'monospace',
+                fontSize:    '0.85rem',
+                outline:     'none',
+                boxSizing:   'border-box',
+              }}
+              onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 8px rgba(0,255,136,0.4)')}
+              onBlur={(e) => (e.currentTarget.style.boxShadow = 'none')}
             />
           </div>
 
+          {/* Bait Cost */}
           <div>
-            <label className="block font-pixel text-teal-light text-xs mb-2">
-              Bait Cost (×1000 VND)
+            <label style={{ display: 'block', fontFamily: 'monospace', fontSize: '0.7rem', color: '#88ffcc', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '6px' }}>
+              Bait Cost (K)
             </label>
-            <div className="flex items-center gap-2">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <CoinSprite size={20} />
               <input
                 type="number"
@@ -93,13 +128,28 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
                 onChange={(e) => setAmount(e.target.value)}
                 placeholder="e.g. 100"
                 min="1"
-                className="flex-1 px-3 py-2 bg-white/10 border-2 border-teal-light rounded text-white text-xs font-pixel placeholder:text-white/30 outline-none focus:border-yellow-300 transition-colors"
+                style={{
+                  flex:        1,
+                  padding:     '8px 12px',
+                  background:  '#1a2a1a',
+                  border:      '1px solid #00ff88',
+                  borderRadius: '4px',
+                  color:       '#00ff88',
+                  fontFamily:  'monospace',
+                  fontSize:    '0.85rem',
+                  outline:     'none',
+                }}
+                onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 8px rgba(0,255,136,0.4)')}
+                onBlur={(e) => (e.currentTarget.style.boxShadow = 'none')}
               />
             </div>
           </div>
 
+          {/* Odds */}
           <div>
-            <label className="block font-pixel text-teal-light text-xs mb-2">Odds</label>
+            <label style={{ display: 'block', fontFamily: 'monospace', fontSize: '0.7rem', color: '#88ffcc', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: '6px' }}>
+              Odds
+            </label>
             <input
               type="number"
               value={odds}
@@ -107,24 +157,39 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
               placeholder="e.g. 1.82"
               step="0.01"
               min="1.01"
-              className="w-full px-3 py-2 bg-white/10 border-2 border-teal-light rounded text-white text-xs font-pixel placeholder:text-white/30 outline-none focus:border-yellow-300 transition-colors"
+              style={{
+                width:       '100%',
+                padding:     '8px 12px',
+                background:  '#1a2a1a',
+                border:      '1px solid #00ff88',
+                borderRadius: '4px',
+                color:       '#00ff88',
+                fontFamily:  'monospace',
+                fontSize:    '0.85rem',
+                outline:     'none',
+                boxSizing:   'border-box',
+              }}
+              onFocus={(e) => (e.currentTarget.style.boxShadow = '0 0 8px rgba(0,255,136,0.4)')}
+              onBlur={(e) => (e.currentTarget.style.boxShadow = 'none')}
             />
           </div>
 
           {error && (
-            <p className="font-pixel text-coral text-xs text-center">{error}</p>
+            <p style={{ fontFamily: 'monospace', fontSize: '0.75rem', color: '#ff4444', textAlign: 'center', margin: 0 }}>
+              ⚠ {error}
+            </p>
           )}
 
           {/* Preview */}
           {amtNum > 0 && oddsNum > 1 && (
-            <div className="bg-white/5 border border-teal-light/30 rounded p-3 space-y-1 text-xs font-pixel">
-              <div className="flex justify-between">
-                <span className="text-white/60">Deduct now</span>
-                <span className="text-coral">-{amtNum}k</span>
+            <div style={{ background: 'rgba(0,255,136,0.05)', border: '1px solid #00ff8833', borderRadius: '4px', padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                <span style={{ color: '#88ffcc88' }}>Deduct now</span>
+                <span style={{ color: '#ff6666' }}>-{amtNum}K</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-white/60">If won → profit</span>
-                <span className="text-green-400">+{profit}k</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontFamily: 'monospace', fontSize: '0.75rem' }}>
+                <span style={{ color: '#88ffcc88' }}>If won → profit</span>
+                <span style={{ color: '#00ff88' }}>+{profit}K</span>
               </div>
             </div>
           )}
@@ -132,9 +197,28 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-coral hover:bg-coral-dark disabled:opacity-50 text-white font-pixel text-xs rounded border-2 border-coral-dark transition-colors"
+            style={{
+              width:        '100%',
+              padding:      '12px',
+              background:   loading ? '#004422' : '#00ff88',
+              color:        '#000',
+              fontFamily:   'monospace',
+              fontSize:     '0.9rem',
+              fontWeight:   900,
+              border:       'none',
+              borderRadius: '4px',
+              cursor:       loading ? 'not-allowed' : 'pointer',
+              letterSpacing: '0.1em',
+              transition:   'box-shadow 0.2s, transform 0.1s',
+            }}
+            onMouseEnter={(e) => {
+              if (!loading) e.currentTarget.style.boxShadow = '0 0 16px rgba(0,255,136,0.6)'
+            }}
+            onMouseLeave={(e) => (e.currentTarget.style.boxShadow = 'none')}
+            onMouseDown={(e) => { if (!loading) e.currentTarget.style.transform = 'scale(0.98)' }}
+            onMouseUp={(e) => (e.currentTarget.style.transform = 'scale(1)')}
           >
-            {loading ? 'Casting...' : '🎣 Cast Bait!'}
+            {loading ? '[ PROCESSING... ]' : '[ EXECUTE CONTRACT ]'}
           </button>
         </form>
       </div>

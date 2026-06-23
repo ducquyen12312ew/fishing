@@ -129,6 +129,18 @@ html, body { margin: 0; padding: 0; height: 100%; }
   100% { transform: scale(1);    opacity: 1; }
 }
 
+/* ── Rain (football theme) ─────────────────────── */
+@keyframes rainFall {
+  0%   { transform: translateY(-20px); opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { transform: translateY(105vh); opacity: 0; }
+}
+@keyframes puddleShimmer {
+  0%, 100% { opacity: 0.7; transform: scaleX(1); }
+  50%       { opacity: 1;   transform: scaleX(1.015); }
+}
+
 /* ── Day/night transition ──────────────────────── */
 .day-night-overlay {
   transition: background-color 30s ease;

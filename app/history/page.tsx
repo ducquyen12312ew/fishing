@@ -7,7 +7,7 @@ import CoinSprite from '@/components/CoinSprite'
 
 interface Bet {
   id: number
-  sport_emoji: string
+  sport_emoji?: string
   name: string
   amount: number
   odds: number

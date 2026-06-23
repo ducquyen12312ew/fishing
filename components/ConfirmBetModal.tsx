@@ -5,7 +5,7 @@ import Image from 'next/image'
 
 interface Bet {
   id: number
-  sport_emoji: string
+  sport_emoji?: string
   name: string
   amount: number
   odds: number

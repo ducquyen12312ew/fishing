@@ -57,9 +57,9 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { sport_emoji, name, amount, odds } = body
+    const { name, amount, odds } = body
 
-    if (!sport_emoji || !name || !amount || !odds) {
+    if (!name || !amount || !odds) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
 
@@ -80,7 +80,6 @@ export async function POST(request: Request) {
 
     const bet = await Bet.create({
       campaignId: camp._id,
-      sportEmoji: sport_emoji,
       name,
       amount:     Number(amount),
       odds:       Number(odds),
