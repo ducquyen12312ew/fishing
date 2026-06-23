@@ -49,10 +49,7 @@ export async function PATCH(
       })
     } else if (result === 'lost') {
       await Campaign.findByIdAndUpdate(bet.campaignId, {
-        $inc: {
-          currentCoins: -bet.amount,
-          totalLose:     bet.amount,
-        },
+        $inc: { totalLose: bet.amount },
       })
 
       await CoinHistory.create({
@@ -62,7 +59,7 @@ export async function PATCH(
         note:       `Lost: ${bet.name}`,
       })
     } else {
-      // Refunded: return the stake, no profit or loss
+      // Refunded: return the stake (it was deducted on placement)
       await Campaign.findByIdAndUpdate(bet.campaignId, {
         $inc: { currentCoins: bet.amount },
       })

@@ -9,7 +9,7 @@ type Result = 'won' | 'lost' | 'refunded'
 function coinDelta(status: Result, amount: number, odds: number): { currentCoins: number; totalWin: number; totalLose: number } {
   const profit = Math.round(amount * (odds - 1))
   if (status === 'won')      return { currentCoins:  amount + profit, totalWin:  profit, totalLose: 0 }
-  if (status === 'lost')     return { currentCoins: -amount,          totalWin:  0,      totalLose: amount }
+  if (status === 'lost')     return { currentCoins:  0,               totalWin:  0,      totalLose: amount }
   /* refunded */             return { currentCoins:  amount,          totalWin:  0,      totalLose: 0 }
 }
 
