@@ -26,9 +26,9 @@ export default function ConfirmBetModal({ bet, onClose, onResolved }: ConfirmBet
     setLoading(true)
     try {
       const res = await fetch(`/api/bets/${bet.id}/resolve`, {
-        method: 'PATCH',
+        method:  'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ result }),
+        body:    JSON.stringify({ result }),
       })
       if (res.ok) {
         onResolved(bet.id, result)
@@ -39,7 +39,8 @@ export default function ConfirmBetModal({ bet, onClose, onResolved }: ConfirmBet
     }
   }
 
-  const winAmount = Math.round(bet.amount * bet.odds)
+  // Only the profit is credited — stake was already deducted when placing
+  const profit = Math.round(bet.amount * (bet.odds - 1))
 
   return (
     <div
@@ -51,9 +52,7 @@ export default function ConfirmBetModal({ bet, onClose, onResolved }: ConfirmBet
       <div className="relative z-10 w-full max-w-sm mx-4 bg-[#0f2b2d] border-4 border-teal-light rounded-lg shadow-2xl animate-modalIn">
         <div className="bg-teal-dark px-6 py-4 border-b-4 border-teal-light flex items-center justify-between">
           <h2 className="font-pixel text-white text-sm">Result?</h2>
-          <button onClick={onClose} className="text-white/70 hover:text-white font-pixel text-xs">
-            ✕
-          </button>
+          <button onClick={onClose} className="text-white/70 hover:text-white font-pixel text-xs">✕</button>
         </div>
 
         <div className="p-6 space-y-4 text-center">
@@ -71,15 +70,25 @@ export default function ConfirmBetModal({ bet, onClose, onResolved }: ConfirmBet
             />
           </div>
 
-          <div className="bg-white/5 rounded p-3 space-y-1 text-xs font-pixel">
-            <div className="text-white/60">
-              Stake: <span className="text-white">{bet.amount}k</span>
+          <div className="bg-white/5 rounded p-3 space-y-1.5 text-xs font-pixel">
+            <div className="flex justify-between">
+              <span className="text-white/60">Stake</span>
+              <span className="text-white">{bet.amount}k</span>
             </div>
-            <div className="text-white/60">
-              Odds: <span className="text-yellow-300">{bet.odds}x</span>
+            <div className="flex justify-between">
+              <span className="text-white/60">Odds</span>
+              <span className="text-yellow-300">{bet.odds}x</span>
             </div>
-            <div className="text-white/60">
-              Win: <span className="text-green-400">+{winAmount}k</span>
+            <div
+              className="flex justify-between pt-1 mt-1"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <span className="text-white/60">If won → profit</span>
+              <span className="text-green-400 font-bold">+{profit}k</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-white/60">If missed → loss</span>
+              <span className="text-red-400 font-bold">-{bet.amount}k</span>
             </div>
           </div>
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 
-interface Bet {
+export interface Bet {
   id: number
   sport_emoji: string
   name: string
@@ -18,73 +18,73 @@ interface BetCardProps {
   isNew?: boolean
   isLeaving?: boolean
   onClick: () => void
+  compact?: boolean
 }
 
-export default function BetCard({ bet, isNew, isLeaving, onClick }: BetCardProps) {
+export default function BetCard({ bet, isNew, isLeaving, onClick, compact }: BetCardProps) {
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
     requestAnimationFrame(() => setMounted(true))
   }, [])
 
-  const baseOpacity = isNew && !mounted ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'
-
   return (
     <button
       onClick={onClick}
       className={`
         relative overflow-hidden group
-        flex items-center gap-3 w-full max-w-xs
-        bg-[#0f2b2d]/92 rounded-lg px-3 py-2
-        cursor-pointer text-left
+        flex items-center gap-3 w-full
+        rounded-xl cursor-pointer text-left
         transition-all duration-300
-        hover:bg-teal-dark/85
-        ${baseOpacity}
+        hover:scale-[1.02] active:scale-[0.98]
+        ${compact ? 'px-3 py-2' : 'px-4 py-3'}
+        ${isNew && !mounted ? 'opacity-0 translate-y-2' : 'opacity-100 translate-y-0'}
         ${isLeaving ? 'animate-fishSlideOut' : ''}
       `}
       style={{
-        // Pixel-art style border via box-shadow
-        boxShadow:
-          '0 0 0 2px #7ec8ca, 2px 2px 0 0 #000, -1px -1px 0 0 #000, 2px -1px 0 0 #000, -1px 2px 0 0 #000',
+        background: 'rgba(255,255,255,0.88)',
+        border: '2px solid rgba(100,180,100,0.5)',
+        boxShadow: '0 2px 8px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08)',
       }}
     >
-      {/* Shimmer sweep on hover */}
+      {/* Hover shimmer */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0"
-        style={{ animation: 'none' }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            top: 0,
-            bottom: 0,
-            width: '50%',
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent)',
-            transform: 'translateX(-100%) skewX(-20deg)',
-          }}
-          className="group-hover:[animation:cardShimmer_0.7s_ease_forwards]"
-        />
-      </div>
+        className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{
+          background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)',
+          animation: 'cardShimmer 0.7s ease forwards',
+        }}
+      />
 
       {/* Sport emoji */}
       <span className="text-xl flex-shrink-0 relative z-10">{bet.sport_emoji}</span>
 
-      {/* Name + meta */}
+      {/* Name + amount */}
       <div className="flex-1 min-w-0 relative z-10">
-        <p className="font-pixel text-white text-xs truncate leading-tight">{bet.name}</p>
-        <p className="font-pixel text-teal-light text-xs mt-0.5">{bet.amount}k</p>
+        <p
+          className="font-pixel text-xs truncate leading-tight"
+          style={{ color: '#1a2f1a', fontWeight: 700 }}
+        >
+          {bet.name}
+        </p>
+        <p
+          className="font-pixel text-xs mt-0.5"
+          style={{ color: '#2d4a2d', fontWeight: 600 }}
+        >
+          {bet.amount}k
+        </p>
       </div>
 
-      {/* Odds badge */}
+      {/* Odds */}
       <span
-        className="font-pixel text-yellow-300 flex-shrink-0 relative z-10"
-        style={{ fontSize: '0.7rem', fontWeight: 700 }}
+        className="font-pixel flex-shrink-0 relative z-10"
+        style={{ color: '#e8a000', fontWeight: 800, fontSize: '0.72rem' }}
       >
         {bet.odds}x
       </span>
 
-      {/* Fish — bounce-in when new, then loop gently */}
+      {/* Fish */}
       <div
         className="flex-shrink-0 relative z-10"
         style={{
@@ -96,8 +96,8 @@ export default function BetCard({ bet, isNew, isLeaving, onClick }: BetCardProps
         <Image
           src={`/fish/${bet.fish_image}`}
           alt="fish"
-          width={36}
-          height={36}
+          width={compact ? 28 : 34}
+          height={compact ? 28 : 34}
           className="object-contain"
           style={{ imageRendering: 'pixelated' }}
         />

@@ -10,12 +10,12 @@ interface AddBetModalProps {
 }
 
 export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
-  const [emoji, setEmoji] = useState('')
-  const [name, setName] = useState('')
-  const [amount, setAmount] = useState('')
-  const [odds, setOdds] = useState('')
+  const [emoji, setEmoji]     = useState('')
+  const [name, setName]       = useState('')
+  const [amount, setAmount]   = useState('')
+  const [odds, setOdds]       = useState('')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError]     = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -27,20 +27,17 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
     setError('')
     try {
       const res = await fetch('/api/bets', {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body:    JSON.stringify({
           sport_emoji: emoji,
           name,
           amount: parseInt(amount),
-          odds: parseFloat(odds),
+          odds:   parseFloat(odds),
         }),
       })
       const data = await res.json()
-      if (!res.ok) {
-        setError(data.error || 'Unknown error')
-        return
-      }
+      if (!res.ok) { setError(data.error || 'Unknown error'); return }
       onSuccess(data)
       onClose()
     } catch {
@@ -50,6 +47,10 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
     }
   }
 
+  const amtNum  = parseInt(amount  || '0')
+  const oddsNum = parseFloat(odds  || '1')
+  const profit  = amtNum > 0 && oddsNum > 1 ? Math.round(amtNum * (oddsNum - 1)) : 0
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -58,29 +59,19 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
 
       <div className="relative z-10 w-full max-w-md mx-4 bg-[#0f2b2d] border-4 border-teal-light rounded-lg shadow-2xl animate-modalIn">
-        {/* Header */}
         <div className="bg-teal-dark px-6 py-4 border-b-4 border-teal-light flex items-center justify-between">
           <h2 className="font-pixel text-white text-sm">New Contract</h2>
-          <button
-            onClick={onClose}
-            className="text-white/70 hover:text-white font-pixel text-xs transition-colors"
-          >
-            ✕
-          </button>
+          <button onClick={onClose} className="text-white/70 hover:text-white font-pixel text-xs">✕</button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
-          {/* Sport */}
           <div>
             <label className="block font-pixel text-teal-light text-xs mb-2">Sport</label>
             <SportSelect value={emoji} onChange={setEmoji} />
           </div>
 
-          {/* Name */}
           <div>
-            <label className="block font-pixel text-teal-light text-xs mb-2">
-              Contract Name
-            </label>
+            <label className="block font-pixel text-teal-light text-xs mb-2">Contract Name</label>
             <input
               type="text"
               value={name}
@@ -90,7 +81,6 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
             />
           </div>
 
-          {/* Amount */}
           <div>
             <label className="block font-pixel text-teal-light text-xs mb-2">
               Bait Cost (×1000 VND)
@@ -108,7 +98,6 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
             </div>
           </div>
 
-          {/* Odds */}
           <div>
             <label className="block font-pixel text-teal-light text-xs mb-2">Odds</label>
             <input
@@ -127,17 +116,15 @@ export default function AddBetModal({ onClose, onSuccess }: AddBetModalProps) {
           )}
 
           {/* Preview */}
-          {amount && odds && (
-            <div className="bg-white/5 border border-teal-light/30 rounded p-3 text-xs font-pixel text-white/70 space-y-1">
-              <div>
-                Deduct:{' '}
-                <span className="text-coral">{parseInt(amount || '0').toLocaleString()}k</span>
+          {amtNum > 0 && oddsNum > 1 && (
+            <div className="bg-white/5 border border-teal-light/30 rounded p-3 space-y-1 text-xs font-pixel">
+              <div className="flex justify-between">
+                <span className="text-white/60">Deduct now</span>
+                <span className="text-coral">-{amtNum}k</span>
               </div>
-              <div>
-                If won:{' '}
-                <span className="text-green-400">
-                  +{Math.round(parseInt(amount || '0') * parseFloat(odds || '1')).toLocaleString()}k
-                </span>
+              <div className="flex justify-between">
+                <span className="text-white/60">If won → profit</span>
+                <span className="text-green-400">+{profit}k</span>
               </div>
             </div>
           )}

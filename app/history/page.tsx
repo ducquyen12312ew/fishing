@@ -20,10 +20,10 @@ interface Bet {
 
 function formatDate(iso: string) {
   const d = new Date(iso)
-  return d.toLocaleDateString('en-GB', {
+  return d.toLocaleDateString('en-US', {
     day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
+    month: 'short',
+    year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   })
@@ -47,7 +47,7 @@ export default function HistoryPage() {
 
   const totalWin = bets
     .filter((b) => b.status === 'won')
-    .reduce((s, b) => s + Math.round(b.amount * b.odds), 0)
+    .reduce((s, b) => s + Math.round(b.amount * (b.odds - 1)), 0)
   const totalLose = bets
     .filter((b) => b.status === 'lost')
     .reduce((s, b) => s + b.amount, 0)
@@ -76,7 +76,7 @@ export default function HistoryPage() {
           <span className="text-white">{bets.length}</span>
         </div>
         <div className="font-pixel text-xs">
-          <span className="text-white/50">Won: </span>
+          <span className="text-white/50">Profit: </span>
           <span className="text-green-400">+{totalWin.toLocaleString()}k</span>
         </div>
         <div className="font-pixel text-xs">
@@ -125,7 +125,7 @@ export default function HistoryPage() {
         )}
 
         {filtered.map((bet) => {
-          const winAmount = Math.round(bet.amount * bet.odds)
+          const winAmount = Math.round(bet.amount * (bet.odds - 1))
           const isWon = bet.status === 'won'
 
           return (
@@ -164,7 +164,7 @@ export default function HistoryPage() {
                   {bet.amount}k × {bet.odds}
                 </p>
                 {isWon ? (
-                  <p className="font-pixel text-green-400 text-sm mt-1">+{winAmount}k</p>
+                  <p className="font-pixel text-green-400 text-sm mt-1">profit +{winAmount}k</p>
                 ) : (
                   <p className="font-pixel text-red-400 text-sm mt-1">-{bet.amount}k</p>
                 )}
