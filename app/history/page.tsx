@@ -20,7 +20,7 @@ interface Bet {
 
 function formatDate(iso: string) {
   const d = new Date(iso)
-  return d.toLocaleDateString('vi-VN', {
+  return d.toLocaleDateString('en-GB', {
     day: '2-digit',
     month: '2-digit',
     year: '2-digit',
@@ -45,8 +45,12 @@ export default function HistoryPage() {
 
   const filtered = bets.filter((b) => filter === 'all' || b.status === filter)
 
-  const totalWin = bets.filter((b) => b.status === 'won').reduce((s, b) => s + Math.round(b.amount * b.odds), 0)
-  const totalLose = bets.filter((b) => b.status === 'lost').reduce((s, b) => s + b.amount, 0)
+  const totalWin = bets
+    .filter((b) => b.status === 'won')
+    .reduce((s, b) => s + Math.round(b.amount * b.odds), 0)
+  const totalLose = bets
+    .filter((b) => b.status === 'lost')
+    .reduce((s, b) => s + b.amount, 0)
   const net = totalWin - totalLose
 
   return (
@@ -58,32 +62,30 @@ export default function HistoryPage() {
             href="/"
             className="font-pixel text-teal-light text-xs hover:text-white transition-colors"
           >
-            ← Về
+            ← Back
           </Link>
-          <h1 className="font-pixel text-white text-sm">Hợp Đồng Cũ</h1>
+          <h1 className="font-pixel text-white text-sm">Old Contracts</h1>
         </div>
-        <div className="flex items-center gap-2">
-          <CoinSprite size={16} />
-        </div>
+        <CoinSprite size={16} />
       </div>
 
       {/* Stats bar */}
       <div className="bg-[#0f2b2d]/80 border-b border-teal-light/30 px-6 py-3 flex gap-6 flex-wrap">
         <div className="font-pixel text-xs">
-          <span className="text-white/50">Tổng kèo: </span>
+          <span className="text-white/50">Total bets: </span>
           <span className="text-white">{bets.length}</span>
         </div>
         <div className="font-pixel text-xs">
-          <span className="text-white/50">Thắng: </span>
+          <span className="text-white/50">Won: </span>
           <span className="text-green-400">+{totalWin.toLocaleString()}k</span>
         </div>
         <div className="font-pixel text-xs">
-          <span className="text-white/50">Thua: </span>
-          <span className="text-coral">-{totalLose.toLocaleString()}k</span>
+          <span className="text-white/50">Lost: </span>
+          <span style={{ color: '#f87171' }}>-{totalLose.toLocaleString()}k</span>
         </div>
         <div className="font-pixel text-xs">
           <span className="text-white/50">Net: </span>
-          <span className={net >= 0 ? 'text-green-400' : 'text-coral'}>
+          <span className={net >= 0 ? 'text-green-400' : 'text-red-400'}>
             {net >= 0 ? '+' : ''}{net.toLocaleString()}k
           </span>
         </div>
@@ -101,7 +103,7 @@ export default function HistoryPage() {
                 : 'border-transparent text-white/40 hover:text-white/70'
             }`}
           >
-            {f === 'all' ? 'Tất cả' : f === 'won' ? '🎣 Thắng' : '💨 Thua'}
+            {f === 'all' ? 'All' : f === 'won' ? '🎣 Won' : '💨 Lost'}
           </button>
         ))}
       </div>
@@ -109,15 +111,15 @@ export default function HistoryPage() {
       {/* Bet list */}
       <div className="p-4 space-y-2 max-w-2xl mx-auto">
         {loading && (
-          <p className="font-pixel text-white/40 text-xs text-center py-8">Đang tải...</p>
+          <p className="font-pixel text-white/40 text-xs text-center py-8">Loading...</p>
         )}
 
         {!loading && filtered.length === 0 && (
           <div className="text-center py-12 space-y-3">
             <p className="text-4xl">🎣</p>
-            <p className="font-pixel text-white/40 text-xs">Chưa có kèo nào</p>
+            <p className="font-pixel text-white/40 text-xs">No bets yet</p>
             <Link href="/" className="font-pixel text-teal-light text-xs underline">
-              Thả mồi thôi!
+              Start fishing!
             </Link>
           </div>
         )}
@@ -158,16 +160,16 @@ export default function HistoryPage() {
 
               {/* Result */}
               <div className="text-right flex-shrink-0">
-                <p className="font-pixel text-xs">
-                  <span className="text-white/50">{bet.amount}k × {bet.odds}</span>
+                <p className="font-pixel text-xs text-white/50">
+                  {bet.amount}k × {bet.odds}
                 </p>
                 {isWon ? (
                   <p className="font-pixel text-green-400 text-sm mt-1">+{winAmount}k</p>
                 ) : (
-                  <p className="font-pixel text-coral text-sm mt-1">-{bet.amount}k</p>
+                  <p className="font-pixel text-red-400 text-sm mt-1">-{bet.amount}k</p>
                 )}
                 <p className="font-pixel text-xs mt-0.5">
-                  {isWon ? '🎣 Bắt được' : '💨 Sổng mất'}
+                  {isWon ? '🎣 Caught' : '💨 Missed'}
                 </p>
               </div>
             </div>

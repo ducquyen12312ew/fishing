@@ -1,38 +1,42 @@
 import { NextResponse } from 'next/server'
-import { sql, getFishImage } from '@/lib/db'
+import { connectDB } from '@/lib/mongodb'
+import Campaign from '@/models/Campaign'
+import Bet from '@/models/Bet'
+import CoinHistory from '@/models/CoinHistory'
+import { getFishImage } from '@/lib/db'
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const status = searchParams.get('status')
 
-    let rows
+    await connectDB()
+
+    let query: Record<string, unknown> = {}
     if (status === 'pending') {
-      ;({ rows } = await sql`
-        SELECT b.*, c.name as campaign_name
-        FROM bets b
-        JOIN campaigns c ON b.campaign_id = c.id
-        WHERE b.status = 'pending'
-        ORDER BY b.created_at DESC
-      `)
+      query = { status: 'pending' }
     } else if (status === 'resolved') {
-      ;({ rows } = await sql`
-        SELECT b.*, c.name as campaign_name
-        FROM bets b
-        JOIN campaigns c ON b.campaign_id = c.id
-        WHERE b.status IN ('won', 'lost')
-        ORDER BY b.resolved_at DESC
-      `)
-    } else {
-      ;({ rows } = await sql`
-        SELECT b.*, c.name as campaign_name
-        FROM bets b
-        JOIN campaigns c ON b.campaign_id = c.id
-        ORDER BY b.created_at DESC
-      `)
+      query = { status: { $in: ['won', 'lost'] } }
     }
 
-    return NextResponse.json(rows)
+    const bets = await Bet.find(query)
+      .populate('campaignId', 'name')
+      .sort(status === 'resolved' ? { resolvedAt: -1 } : { createdAt: -1 })
+      .lean()
+
+    // Flatten campaignId → campaign_name for frontend compatibility
+    const shaped = bets.map((b) => ({
+      ...b,
+      id: b._id,
+      campaign_name:
+        b.campaignId && typeof b.campaignId === 'object' && 'name' in b.campaignId
+          ? (b.campaignId as { name: string }).name
+          : '',
+      sport_emoji: b.sportEmoji,
+      fish_image: b.fishImage,
+    }))
+
+    return NextResponse.json(shaped)
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Failed to fetch bets' }, { status: 500 })
@@ -46,41 +50,48 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
     }
 
-    // Get active campaign
-    const { rows: campaigns } = await sql`
-      SELECT * FROM campaigns WHERE is_active = true LIMIT 1
-    `
-    if (campaigns.length === 0) {
+    await connectDB()
+
+    const campaign = await Campaign.findOne({ isActive: true })
+    if (!campaign) {
       return NextResponse.json({ error: 'No active campaign' }, { status: 400 })
     }
-    const campaign = campaigns[0]
-
-    if (campaign.current_coins < amount) {
-      return NextResponse.json({ error: 'Không đủ xu' }, { status: 400 })
+    if (campaign.currentCoins < amount) {
+      return NextResponse.json({ error: 'Not enough coins' }, { status: 400 })
     }
 
-    const fish_image = getFishImage(amount)
+    const fishImage = getFishImage(amount)
 
-    const { rows } = await sql`
-      INSERT INTO bets (campaign_id, sport_emoji, name, amount, odds, fish_image, status)
-      VALUES (${campaign.id}, ${sport_emoji}, ${name}, ${amount}, ${odds}, ${fish_image}, 'pending')
-      RETURNING *
-    `
+    const bet = await Bet.create({
+      campaignId: campaign._id,
+      sportEmoji: sport_emoji,
+      name,
+      amount,
+      odds,
+      fishImage,
+    })
 
-    // Deduct coins
-    await sql`
-      UPDATE campaigns
-      SET current_coins = current_coins - ${amount},
-          total_lose = total_lose + ${amount}
-      WHERE id = ${campaign.id}
-    `
+    await Campaign.findByIdAndUpdate(campaign._id, {
+      $inc: { currentCoins: -amount, totalLose: amount },
+    })
 
-    await sql`
-      INSERT INTO coin_history (campaign_id, type, amount, note)
-      VALUES (${campaign.id}, 'lose', ${amount}, ${`Mua mồi: ${name}`})
-    `
+    await CoinHistory.create({
+      campaignId: campaign._id,
+      type: 'lose',
+      amount,
+      note: `Bait: ${name}`,
+    })
 
-    return NextResponse.json(rows[0], { status: 201 })
+    // Return shaped for frontend
+    return NextResponse.json(
+      {
+        ...bet.toObject(),
+        id: bet._id,
+        sport_emoji: bet.sportEmoji,
+        fish_image: bet.fishImage,
+      },
+      { status: 201 }
+    )
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Failed to create bet' }, { status: 500 })

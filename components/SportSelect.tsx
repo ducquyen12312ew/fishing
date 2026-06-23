@@ -8,22 +8,22 @@ interface Sport {
 }
 
 const SPORTS: Sport[] = [
-  { emoji: '⚽', keywords: ['bóng đá', 'football', 'soccer', 'bong da'] },
-  { emoji: '🏀', keywords: ['bóng rổ', 'basketball', 'bong ro'] },
+  { emoji: '⚽', keywords: ['football', 'soccer', 'bong da'] },
+  { emoji: '🏀', keywords: ['basketball', 'bong ro'] },
   { emoji: '🎾', keywords: ['tennis'] },
-  { emoji: '🏈', keywords: ['american football', 'bóng bầu dục'] },
-  { emoji: '⚾', keywords: ['bóng chày', 'baseball', 'bong chay'] },
-  { emoji: '🏐', keywords: ['bóng chuyền', 'volleyball', 'bong chuyen'] },
-  { emoji: '🏒', keywords: ['hockey', 'khúc côn cầu'] },
-  { emoji: '🥊', keywords: ['boxing', 'quyền anh'] },
-  { emoji: '🏇', keywords: ['đua ngựa', 'horse racing', 'dua ngua'] },
-  { emoji: '🎮', keywords: ['esport', 'gaming', 'game', 'điện tử', 'dien tu'] },
-  { emoji: '🏎️', keywords: ['f1', 'racing', 'đua xe', 'dua xe'] },
-  { emoji: '🏋️', keywords: ['cử tạ', 'weightlifting', 'cu ta'] },
-  { emoji: '🏓', keywords: ['bóng bàn', 'ping pong', 'bong ban', 'table tennis'] },
-  { emoji: '🏸', keywords: ['cầu lông', 'badminton', 'cau long'] },
-  { emoji: '🥋', keywords: ['mma', 'võ thuật', 'vo thuat', 'martial arts'] },
-  { emoji: '🎱', keywords: ['bi-a', 'billiards', 'pool', 'bia'] },
+  { emoji: '🏈', keywords: ['american football', 'rugby'] },
+  { emoji: '⚾', keywords: ['baseball', 'bong chay'] },
+  { emoji: '🏐', keywords: ['volleyball', 'bong chuyen'] },
+  { emoji: '🏒', keywords: ['hockey', 'ice hockey'] },
+  { emoji: '🥊', keywords: ['boxing', 'quyen anh'] },
+  { emoji: '🏇', keywords: ['horse racing', 'dua ngua'] },
+  { emoji: '🎮', keywords: ['esport', 'gaming', 'game'] },
+  { emoji: '🏎️', keywords: ['f1', 'racing', 'dua xe'] },
+  { emoji: '🏋️', keywords: ['weightlifting', 'cu ta'] },
+  { emoji: '🏓', keywords: ['ping pong', 'table tennis', 'bong ban'] },
+  { emoji: '🏸', keywords: ['badminton', 'cau long'] },
+  { emoji: '🥋', keywords: ['mma', 'martial arts', 'vo thuat'] },
+  { emoji: '🎱', keywords: ['billiards', 'pool', 'bia'] },
 ]
 
 interface SportSelectProps {
@@ -62,7 +62,7 @@ export default function SportSelect({ value, onChange }: SportSelectProps) {
         {value ? (
           <span className="text-2xl">{value}</span>
         ) : (
-          <span className="text-white/50 text-xs font-pixel">Chọn môn...</span>
+          <span className="text-white/50 text-xs font-pixel">Select sport...</span>
         )}
       </button>
 
@@ -73,7 +73,7 @@ export default function SportSelect({ value, onChange }: SportSelectProps) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm môn..."
+            placeholder="Search sport..."
             className="w-full px-3 py-2 bg-transparent text-white text-xs font-pixel border-b border-teal-light outline-none placeholder:text-white/40"
           />
           <div className="flex flex-wrap gap-2 p-3 max-h-40 overflow-y-auto">
@@ -95,7 +95,7 @@ export default function SportSelect({ value, onChange }: SportSelectProps) {
               </button>
             ))}
             {filtered.length === 0 && (
-              <span className="text-white/40 text-xs font-pixel">Không tìm thấy</span>
+              <span className="text-white/40 text-xs font-pixel">Not found</span>
             )}
           </div>
         </div>

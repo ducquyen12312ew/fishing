@@ -1,181 +1,75 @@
-# Một Ngày Đi Câu 🎣
+# A Fishing Day 🎣
 
-Hệ thống theo dõi kèo cá cược cá nhân với giao diện pixel art cute.
+Personal bet tracking system with pixel art UI.
 
-## Cài đặt nhanh
+## Quick Start
 
-### Windows
-```bash
-setup.bat
-```
-
-### macOS / Linux
-```bash
-bash setup.sh
-```
-
-## Setup từng bước
-
-### 1. Clone repo
-```bash
-git clone https://github.com/ducquyen12312ew/fishing.git
-cd fishing
-```
-
-### 2. Install dependencies
 ```bash
 npm install
 ```
 
-### 3. Tạo Vercel Postgres Database
+### 1. Set up MongoDB Atlas
 
-1. Vào [Vercel Dashboard](https://vercel.com)
-2. Chọn project hoặc tạo mới
-3. **Storage** → **Create Database** → **Postgres**
-4. Chọn region → **Create**
+1. Create a free cluster at [MongoDB Atlas](https://cloud.mongodb.com)
+2. Create a database user with read/write access
+3. Whitelist your IP (or `0.0.0.0/0` for Vercel)
+4. Copy the connection string
 
-### 4. Copy env vars
+### 2. Configure `.env.local`
 
-**Cách 1 (Dễ nhất):**
-- Tab **Quickstart** → copy toàn bộ codeblock
-
-**Cách 2:**
-- Tab **.env.local** → copy tất cả
-
-### 5. Tạo `.env.local`
-```bash
-# Paste env vars từ Vercel vào file này
-cp .env.local.example .env.local
-# Edit .env.local với thông tin từ Vercel
+```env
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.xxxx.mongodb.net/fishing-day
 ```
 
-### 6. Khởi tạo database
-```bash
-npm run init-db
-```
+> Collections are created automatically on first use — no init script needed.
 
-### 7. Chạy dev
+### 3. Run locally
+
 ```bash
 npm run dev
 ```
-Mở http://localhost:3000
 
-### 8. Deploy lên Vercel (optional)
+Open http://localhost:3000
+
+### 4. Deploy to Vercel
+
 ```bash
-npm install -g vercel
-vercel login
 vercel deploy
 ```
 
-## Cách dùng app
+Add `MONGODB_URI` to Vercel → Project Settings → Environment Variables.
 
-1. **Tạo chiến dịch**: Click 💰 góc phải → "+ Mới" → nhập tên + số xu
-2. **Thêm kèo**: Click "Thêm hợp đồng" → chọn môn, nhập chi tiết
-3. **Confirm kết quả**: Click card kèo → "🎣 Bắt được!" hoặc "💨 Sổng mất"
-4. **Xem lịch sử**: Click "Hợp đồng cũ"
+## How to use
 
-## Project structure
+1. **Create a campaign** — click 💰 top right → "+ New" → enter name & initial coins
+2. **Add a bet** — click "New Contract" → choose sport, name, bait cost, odds
+3. **Confirm result** — click a bet card → "🎣 Caught!" or "💨 Missed..."
+4. **View history** — click "Old Contracts"
 
-```
-.
-├── app/
-│   ├── page.tsx                 # Hero page
-│   ├── history/page.tsx         # History page
-│   ├── layout.tsx               # Root layout
-│   ├── globals.css              # Global styles
-│   └── api/                     # API endpoints
-├── components/                  # React components
-│   ├── RabbitCanvas.tsx         # Animated rabbit sprite
-│   ├── BackgroundSlider.tsx     # Background rotation
-│   ├── AddBetModal.tsx          # Add bet form
-│   ├── CampaignModal.tsx        # Campaign management
-│   └── ...                      # Other components
-├── lib/db.ts                    # Database helpers
-├── public/                      # Assets
-│   ├── rabbit.png               # Sprite sheet
-│   ├── background/              # BG images
-│   ├── fish/                    # Fish sprites
-│   ├── coin2_20x20.png          # Coin animation
-│   └── gift-box.png             # Basket icon
-└── scripts/init-db.js           # Database init script
-```
-
-## Tech Stack
+## Tech stack
 
 - **Framework**: Next.js 16 (App Router)
-- **Database**: Vercel Postgres (Neon)
+- **Database**: MongoDB Atlas (Mongoose)
 - **Styling**: Tailwind CSS
 - **Language**: TypeScript
-- **Fonts**: Press Start 2P (Google Fonts)
-
-## Scripts
-
-```bash
-npm run dev       # Development server
-npm run build     # Production build
-npm start         # Run production build
-npm run init-db   # Initialize database
-```
+- **Font**: Silkscreen (Google Fonts)
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/campaigns` | Lấy danh sách chiến dịch |
-| POST | `/api/campaigns` | Tạo chiến dịch mới |
-| PATCH | `/api/campaigns/[id]/activate` | Kích hoạt chiến dịch |
-| GET | `/api/bets` | Lấy kèo |
-| POST | `/api/bets` | Thêm kèo mới |
-| PATCH | `/api/bets/[id]/resolve` | Confirm kết quả kèo |
+| GET | `/api/campaigns` | List campaigns |
+| POST | `/api/campaigns` | Create campaign |
+| PATCH | `/api/campaigns/[id]/activate` | Set active campaign |
+| GET | `/api/bets?status=pending` | Pending bets |
+| GET | `/api/bets?status=resolved` | Bet history |
+| POST | `/api/bets` | Place new bet |
+| PATCH | `/api/bets/[id]/resolve` | Resolve bet result |
 
-## Database Schema
-
-- **campaigns**: Chiến dịch đặt cược
-- **bets**: Các kèo đã đặt
-- **coin_history**: Lịch sử thay đổi xu
-
-## Features
-
-- 🎨 Pixel art UI với sprite animation
-- 🐰 Con thỏ câu cá animate
-- 🐟 8 loại cá theo mức tiền
-- 💰 Hệ thống xu & chiến dịch
-- 📊 Lịch sử kèo & thống kê ROI
-- 🏆 16 môn thể thao (với search)
-- 📱 Responsive design
-- ⚡ Real-time updates
-
-## Troubleshooting
-
-### `npm run init-db` bị lỗi
-- Kiểm tra `.env.local` có `POSTGRES_URL`?
-- Kiểm tra kết nối Vercel Postgres chưa?
-- Chạy lại từ đầu: `rm -rf .next node_modules && npm install`
-
-### Build failed
-- Xóa `.next` folder: `rm -rf .next`
-- Chạy lại: `npm run build`
-
-### Dev server không chạy được
-- Port 3000 bị dùng? Chạy với port khác: `npm run dev -- -p 3001`
-
-## Deploy Vercel
+## Scripts
 
 ```bash
-# 1. Login
-vercel login
-
-# 2. Link project
-vercel link
-
-# 3. Deploy
-vercel deploy --prod
+npm run dev      # Development server
+npm run build    # Production build
+npm start        # Run production build
 ```
-
-Vercel sẽ tự inject env vars từ project settings.
-
----
-
-**GitHub**: https://github.com/ducquyen12312ew/fishing  
-**Author**: Fishing Betting Tracker 🎣
-

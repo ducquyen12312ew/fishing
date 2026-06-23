@@ -20,7 +20,7 @@ interface CampaignModalProps {
 
 export default function CampaignModal({ onClose, onCampaignChange }: CampaignModalProps) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
-  const [tab, setTab] = useState<'new' | 'list'>('list')
+  const [tab, setTab] = useState<'list' | 'new'>('list')
   const [name, setName] = useState('')
   const [coins, setCoins] = useState('')
   const [loading, setLoading] = useState(false)
@@ -35,7 +35,7 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
   async function createCampaign(e: React.FormEvent) {
     e.preventDefault()
     if (!name || !coins) {
-      setError('Điền đủ thông tin!')
+      setError('Fill in all fields!')
       return
     }
     setLoading(true)
@@ -47,7 +47,7 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error)
+        setError(data.error || 'Error creating campaign')
         return
       }
       setCampaigns((prev) => [data, ...prev])
@@ -62,9 +62,7 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
 
   async function activate(id: number) {
     await fetch(`/api/campaigns/${id}/activate`, { method: 'PATCH' })
-    setCampaigns((prev) =>
-      prev.map((c) => ({ ...c, is_active: c.id === id }))
-    )
+    setCampaigns((prev) => prev.map((c) => ({ ...c, is_active: c.id === id })))
     onCampaignChange()
   }
 
@@ -84,7 +82,7 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
         <div className="bg-teal-dark px-6 py-4 border-b-4 border-teal-light flex items-center justify-between flex-shrink-0">
           <div className="flex items-center gap-2">
             <CoinSprite size={20} />
-            <h2 className="font-pixel text-white text-sm">Nạp Xu</h2>
+            <h2 className="font-pixel text-white text-sm">Top Up</h2>
           </div>
           <button onClick={onClose} className="text-white/70 hover:text-white font-pixel text-xs">
             ✕
@@ -98,12 +96,10 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
               key={t}
               onClick={() => setTab(t)}
               className={`flex-1 py-3 font-pixel text-xs transition-colors ${
-                tab === t
-                  ? 'bg-teal-dark text-white'
-                  : 'text-white/50 hover:text-white'
+                tab === t ? 'bg-teal-dark text-white' : 'text-white/50 hover:text-white'
               }`}
             >
-              {t === 'list' ? 'Chiến Dịch' : '+ Mới'}
+              {t === 'list' ? 'Campaign' : '+ New'}
             </button>
           ))}
         </div>
@@ -113,19 +109,19 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
             <form onSubmit={createCampaign} className="space-y-4">
               <div>
                 <label className="block font-pixel text-teal-light text-xs mb-2">
-                  Tên Chiến Dịch
+                  Campaign Name
                 </label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="VD: Tháng 6/2026"
+                  placeholder="e.g. June 2026"
                   className="w-full px-3 py-2 bg-white/10 border-2 border-teal-light rounded text-white text-xs font-pixel placeholder:text-white/30 outline-none focus:border-yellow-300"
                 />
               </div>
               <div>
                 <label className="block font-pixel text-teal-light text-xs mb-2">
-                  Xu Ban Đầu
+                  Initial Coins
                 </label>
                 <div className="flex items-center gap-2">
                   <CoinSprite size={20} />
@@ -133,7 +129,7 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
                     type="number"
                     value={coins}
                     onChange={(e) => setCoins(e.target.value)}
-                    placeholder="VD: 1000"
+                    placeholder="e.g. 1000"
                     min="1"
                     className="flex-1 px-3 py-2 bg-white/10 border-2 border-teal-light rounded text-white text-xs font-pixel placeholder:text-white/30 outline-none focus:border-yellow-300"
                   />
@@ -145,7 +141,7 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
                 disabled={loading}
                 className="w-full py-3 bg-coral hover:bg-coral-dark text-white font-pixel text-xs rounded border-2 border-coral-dark transition-colors disabled:opacity-50"
               >
-                {loading ? 'Đang tạo...' : 'Tạo Chiến Dịch'}
+                {loading ? 'Creating...' : 'Create Campaign'}
               </button>
             </form>
           ) : (
@@ -156,20 +152,20 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
                   <p className="font-pixel text-yellow-300 text-xs">⭐ {active.name}</p>
                   <div className="grid grid-cols-2 gap-2 text-xs font-pixel">
                     <div className="text-white/60">
-                      Xu hiện tại:{' '}
+                      Current:{' '}
                       <span className="text-white">{active.current_coins.toLocaleString()}</span>
                     </div>
                     <div className="text-white/60">
-                      Xu lời:{' '}
+                      Profit:{' '}
                       <span className="text-green-400">+{active.total_win.toLocaleString()}</span>
                     </div>
                     <div className="text-white/60">
-                      Xu lỗ:{' '}
+                      Loss:{' '}
                       <span className="text-coral">-{active.total_lose.toLocaleString()}</span>
                     </div>
                     <div className="text-white/60">
                       ROI:{' '}
-                      <span className={parseFloat(roi) >= 0 ? 'text-green-400' : 'text-coral'}>
+                      <span className={parseFloat(roi) >= 0 ? 'text-yellow-300' : 'text-coral'}>
                         {roi}%
                       </span>
                     </div>
@@ -179,7 +175,7 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
 
               {campaigns.length === 0 && (
                 <p className="font-pixel text-white/40 text-xs text-center py-4">
-                  Chưa có chiến dịch nào
+                  No campaigns yet
                 </p>
               )}
 
@@ -201,16 +197,15 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
                       </span>
                     </div>
                   </div>
-                  {!c.is_active && (
+                  {c.is_active ? (
+                    <span className="font-pixel text-yellow-300 text-xs">⭐ Active</span>
+                  ) : (
                     <button
                       onClick={() => activate(c.id)}
                       className="px-3 py-1 bg-teal-dark hover:bg-teal-DEFAULT text-white font-pixel text-xs rounded border border-teal-light transition-colors"
                     >
-                      Chọn
+                      Select
                     </button>
-                  )}
-                  {c.is_active && (
-                    <span className="font-pixel text-yellow-300 text-xs">⭐ Active</span>
                   )}
                 </div>
               ))}

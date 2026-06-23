@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { sql } from '@/lib/db'
+import { connectDB } from '@/lib/mongodb'
+import Campaign from '@/models/Campaign'
 
 export async function PATCH(
   _request: Request,
@@ -7,16 +8,21 @@ export async function PATCH(
 ) {
   try {
     const { id } = await params
-    await sql`UPDATE campaigns SET is_active = false`
-    const { rows } = await sql`
-      UPDATE campaigns SET is_active = true
-      WHERE id = ${id}
-      RETURNING *
-    `
-    if (rows.length === 0) {
+    await connectDB()
+
+    // Deactivate all, then activate the target
+    await Campaign.updateMany({}, { isActive: false })
+    const campaign = await Campaign.findByIdAndUpdate(
+      id,
+      { isActive: true },
+      { new: true }
+    ).lean()
+
+    if (!campaign) {
       return NextResponse.json({ error: 'Campaign not found' }, { status: 404 })
     }
-    return NextResponse.json(rows[0])
+
+    return NextResponse.json(campaign)
   } catch (err) {
     console.error(err)
     return NextResponse.json({ error: 'Failed to activate campaign' }, { status: 500 })

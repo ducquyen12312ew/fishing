@@ -50,7 +50,7 @@ export default function ConfirmBetModal({ bet, onClose, onResolved }: ConfirmBet
 
       <div className="relative z-10 w-full max-w-sm mx-4 bg-[#0f2b2d] border-4 border-teal-light rounded-lg shadow-2xl animate-modalIn">
         <div className="bg-teal-dark px-6 py-4 border-b-4 border-teal-light flex items-center justify-between">
-          <h2 className="font-pixel text-white text-sm">Kết Quả?</h2>
+          <h2 className="font-pixel text-white text-sm">Result?</h2>
           <button onClick={onClose} className="text-white/70 hover:text-white font-pixel text-xs">
             ✕
           </button>
@@ -72,10 +72,14 @@ export default function ConfirmBetModal({ bet, onClose, onResolved }: ConfirmBet
           </div>
 
           <div className="bg-white/5 rounded p-3 space-y-1 text-xs font-pixel">
-            <div className="text-white/60">Đặt: <span className="text-white">{bet.amount}k</span></div>
-            <div className="text-white/60">Tỉ lệ: <span className="text-yellow-300">{bet.odds}x</span></div>
             <div className="text-white/60">
-              Thắng: <span className="text-green-400">+{winAmount}k</span>
+              Stake: <span className="text-white">{bet.amount}k</span>
+            </div>
+            <div className="text-white/60">
+              Odds: <span className="text-yellow-300">{bet.odds}x</span>
+            </div>
+            <div className="text-white/60">
+              Win: <span className="text-green-400">+{winAmount}k</span>
             </div>
           </div>
 
@@ -85,14 +89,14 @@ export default function ConfirmBetModal({ bet, onClose, onResolved }: ConfirmBet
               disabled={loading}
               className="flex-1 py-3 bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-pixel text-xs rounded border-2 border-green-400 transition-colors"
             >
-              🎣 Bắt Được!
+              🎣 Caught!
             </button>
             <button
               onClick={() => resolve('lost')}
               disabled={loading}
               className="flex-1 py-3 bg-coral hover:bg-coral-dark disabled:opacity-50 text-white font-pixel text-xs rounded border-2 border-coral-dark transition-colors"
             >
-              💨 Sổng Mất
+              💨 Missed...
             </button>
           </div>
         </div>

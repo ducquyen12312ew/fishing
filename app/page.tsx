@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
-import BackgroundSlider from '@/components/BackgroundSlider'
-import RabbitCanvas from '@/components/RabbitCanvas'
+import Background from '@/components/Background'
+import Rabbit from '@/components/RabbitCanvas'
 import BetCard from '@/components/BetCard'
 import AddBetModal from '@/components/AddBetModal'
 import ConfirmBetModal from '@/components/ConfirmBetModal'
 import CampaignModal from '@/components/CampaignModal'
-import GiftBoxWidget from '@/components/GiftBoxWidget'
+import StatsPanel from '@/components/StatsPanel'
 
 interface Bet {
   id: number
@@ -25,6 +25,7 @@ interface Bet {
 interface Campaign {
   id: number
   name: string
+  initial_coins: number
   current_coins: number
   total_win: number
   total_lose: number
@@ -32,7 +33,6 @@ interface Campaign {
 }
 
 const MAX_VISIBLE = 5
-// Fish stay in basket for 10 hours
 const FISH_TTL_MS = 10 * 60 * 60 * 1000
 
 export default function HomePage() {
@@ -41,9 +41,7 @@ export default function HomePage() {
   const [showAddBet, setShowAddBet] = useState(false)
   const [showCampaign, setShowCampaign] = useState(false)
   const [selectedBet, setSelectedBet] = useState<Bet | null>(null)
-  const [rabbitState, setRabbitState] = useState<'idle' | 'bite' | 'wait'>('idle')
   const [leavingIds, setLeavingIds] = useState<Set<number>>(new Set())
-  // Track fish caught in last 10h for gift box
   const [basketFish, setBasketFish] = useState<number[]>([])
   const newBetIdRef = useRef<number | null>(null)
 
@@ -66,21 +64,11 @@ export default function HomePage() {
     fetchData()
   }, [fetchData])
 
-  // Rabbit state based on pending bets
-  useEffect(() => {
-    if (bets.length === 0) {
-      setRabbitState('wait')
-    } else {
-      setRabbitState('idle')
-    }
-  }, [bets.length])
-
-  // Clean up basket fish older than 10h
   useEffect(() => {
     const timer = setInterval(() => {
       const now = Date.now()
       setBasketFish((prev) => prev.filter((ts) => now - ts < FISH_TTL_MS))
-    }, 60000)
+    }, 60_000)
     return () => clearInterval(timer)
   }, [])
 
@@ -92,11 +80,8 @@ export default function HomePage() {
 
   function handleBetResolved(id: number, result: 'won' | 'lost') {
     if (result === 'won') {
-      setRabbitState('bite')
       setBasketFish((prev) => [...prev, Date.now()])
     }
-
-    // Animate out
     setLeavingIds((prev) => new Set(prev).add(id))
     setTimeout(() => {
       setBets((prev) => prev.filter((b) => b.id !== id))
@@ -106,107 +91,104 @@ export default function HomePage() {
         return next
       })
     }, 600)
-
     fetchData()
   }
 
   const visibleBets = bets.slice(0, MAX_VISIBLE)
   const hiddenCount = bets.length - MAX_VISIBLE
-  const coinCount = campaign?.current_coins ?? 0
 
   return (
-    <main className="relative w-screen h-screen overflow-hidden">
-      {/* Background */}
-      <BackgroundSlider />
+    <main className="relative w-screen h-screen overflow-hidden select-none">
+      {/* ── Background (bg1.png + clouds + waves + leaves) ── */}
+      <Background />
 
-      {/* Overlay gradient for readability */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/40 pointer-events-none" />
-
-      {/* Title */}
-      <div className="absolute top-6 left-0 right-0 flex flex-col items-center z-10 pointer-events-none">
+      {/* ── Title ─────────────────────────────────────────── */}
+      <div className="absolute top-10 left-0 right-0 flex flex-col items-center z-10 pointer-events-none">
         <h1
-          className="font-pixel text-[#2d6a6f] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] text-shadow"
-          style={{ fontSize: 'clamp(14px, 3vw, 28px)' }}
+          className="font-pixel font-bold text-[#2d6a6f] drop-shadow-[0_3px_6px_rgba(0,0,0,0.9)]"
+          style={{ fontSize: 'clamp(1.5rem, 4vw, 3rem)', lineHeight: 1.2 }}
         >
-          Một Ngày Đi Câu
+          A Fishing Day
         </h1>
         <p
-          className="font-pixel text-[#3d8a8e] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] mt-1"
-          style={{ fontSize: 'clamp(8px, 1.5vw, 14px)' }}
+          className="font-pixel text-[#3d8a8e] drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] mt-2"
+          style={{ fontSize: 'clamp(0.55rem, 1.5vw, 0.9rem)', opacity: 0.85 }}
         >
-          Của Dưa Hấu
+          by Watermelon
         </p>
       </div>
 
-      {/* Action buttons below title */}
-      <div className="absolute top-24 left-0 right-0 flex justify-center gap-4 z-10 pointer-events-auto">
+      {/* ── Action buttons ─────────────────────────────────── */}
+      <div className="absolute top-32 sm:top-36 left-0 right-0 flex justify-center gap-4 z-10">
         <button
           onClick={() => setShowAddBet(true)}
-          className="px-4 py-2 bg-coral hover:bg-coral-dark text-white font-pixel text-xs rounded border-2 border-coral-dark shadow-lg transition-all hover:scale-105 active:scale-95"
+          className="px-5 py-2 bg-coral hover:bg-coral-dark text-white font-pixel text-xs rounded border-2 border-coral-dark shadow-lg transition-all hover:scale-105 active:scale-95"
         >
-          + Thêm hợp đồng
+          + New Contract
         </button>
         <Link
           href="/history"
-          className="px-4 py-2 bg-transparent hover:bg-white/10 text-white font-pixel text-xs rounded border-2 border-white/60 hover:border-white shadow-lg transition-all hover:scale-105 active:scale-95"
+          className="px-5 py-2 bg-transparent hover:bg-white/15 text-white font-pixel text-xs rounded border-2 border-white/60 hover:border-white shadow-lg transition-all hover:scale-105 active:scale-95"
         >
-          Hợp đồng cũ
+          Old Contracts
         </Link>
       </div>
 
-      {/* Bet cards above rabbit */}
-      <div className="absolute bottom-[220px] left-1/2 -translate-x-1/2 z-10 flex flex-col-reverse items-center gap-2 w-full max-w-sm px-4">
-        {visibleBets.map((bet, i) => (
+      {/* ── Bet cards floating above rabbit ────────────────── */}
+      <div className="absolute bottom-[22%] left-1/2 -translate-x-1/2 z-10 flex flex-col-reverse items-center gap-2 w-full max-w-sm px-4">
+        {visibleBets.map((bet) => (
           <BetCard
             key={bet.id}
             bet={bet}
-            isNew={bet.id === newBetIdRef.current && i === 0}
+            isNew={bet.id === newBetIdRef.current}
             isLeaving={leavingIds.has(bet.id)}
             onClick={() => setSelectedBet(bet)}
           />
         ))}
         {hiddenCount > 0 && (
-          <div className="font-pixel text-white/60 text-xs">
-            +{hiddenCount} kèo khác...
-          </div>
+          <span className="font-pixel text-white/60 text-xs">
+            +{hiddenCount} more...
+          </span>
         )}
       </div>
 
-      {/* Rabbit */}
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center">
-        <RabbitCanvas
-          state={rabbitState}
-          onBiteComplete={() => setRabbitState(bets.length > 0 ? 'idle' : 'wait')}
-        />
+      {/* ── Rabbit ─────────────────────────────────────────── */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: '15%',
+          left: '50%',
+          animation: 'rabbitBob 2s ease-in-out infinite',
+          zIndex: 10,
+        }}
+      >
+        <Rabbit />
       </div>
 
-      {/* Right sidebar widget */}
-      <div className="absolute right-4 bottom-20 z-10">
-        <GiftBoxWidget
+      {/* ── Stats panel — top right ─────────────────────────── */}
+      <div className="fixed top-4 right-4 z-20">
+        <StatsPanel
+          campaign={campaign}
           fishCount={basketFish.length}
-          coinCount={coinCount}
-          onCampaignClick={() => setShowCampaign(true)}
+          onTopUpClick={() => setShowCampaign(true)}
         />
       </div>
 
-      {/* No campaign notice */}
+      {/* ── No campaign nudge ───────────────────────────────── */}
       {!campaign && (
         <div className="absolute bottom-4 left-0 right-0 flex justify-center z-10">
           <button
             onClick={() => setShowCampaign(true)}
             className="font-pixel text-yellow-300 text-xs bg-black/50 px-4 py-2 rounded border border-yellow-300/50 hover:bg-black/70 transition-colors animate-pulse"
           >
-            ⚠️ Chưa có chiến dịch → Tạo ngay!
+            ⚠️ No campaign → Create one!
           </button>
         </div>
       )}
 
-      {/* Modals */}
+      {/* ── Modals ─────────────────────────────────────────── */}
       {showAddBet && (
-        <AddBetModal
-          onClose={() => setShowAddBet(false)}
-          onSuccess={handleBetSuccess}
-        />
+        <AddBetModal onClose={() => setShowAddBet(false)} onSuccess={handleBetSuccess} />
       )}
 
       {selectedBet && (
