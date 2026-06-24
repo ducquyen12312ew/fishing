@@ -16,6 +16,8 @@ const CoinHistorySchema = new Schema<ICoinHistory>({
   createdAt:  { type: Date, default: Date.now },
 })
 
+CoinHistorySchema.index({ campaignId: 1, createdAt: -1 })
+
 const CoinHistory: Model<ICoinHistory> =
   mongoose.models.CoinHistory ?? mongoose.model<ICoinHistory>('CoinHistory', CoinHistorySchema)
 

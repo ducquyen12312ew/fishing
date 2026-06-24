@@ -20,6 +20,9 @@ interface Campaign {
   total_win: number
   total_lose: number
   is_active: boolean
+  won_count:     number
+  lost_count:    number
+  pending_count: number
 }
 
 const MAX_VISIBLE  = 4
@@ -72,6 +75,14 @@ export default function HomePage() {
   }, [])
 
   useEffect(() => { fetchData() }, [fetchData])
+
+  /* ── Auto-refresh every 30s (visible tabs only) ── */
+  useEffect(() => {
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchData() }
+    document.addEventListener('visibilitychange', onVisible)
+    const t = setInterval(() => { if (document.visibilityState === 'visible') fetchData() }, 30_000)
+    return () => { document.removeEventListener('visibilitychange', onVisible); clearInterval(t) }
+  }, [fetchData])
 
   /* ── Fish basket TTL ──────────────────────────── */
   useEffect(() => {
@@ -356,6 +367,9 @@ export default function HomePage() {
         <StatsPanel
           campaign={campaign}
           fishCount={basketFish.length}
+          pendingCount={campaign?.pending_count ?? bets.length}
+          wonCount={campaign?.won_count ?? 0}
+          lostCount={campaign?.lost_count ?? 0}
           onTopUpClick={() => { setShowCampaign(true); resetIdle() }}
         />
       </div>

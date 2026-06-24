@@ -13,6 +13,9 @@ interface Campaign {
 interface StatsPanelProps {
   campaign: Campaign | null
   fishCount: number
+  pendingCount: number
+  wonCount: number
+  lostCount: number
   onTopUpClick: () => void
 }
 
@@ -55,14 +58,17 @@ function Row({
   )
 }
 
-export default function StatsPanel({ campaign, fishCount, onTopUpClick }: StatsPanelProps) {
+export default function StatsPanel({ campaign, fishCount, pendingCount, wonCount, lostCount, onTopUpClick }: StatsPanelProps) {
   const roi = campaign
     ? (
         ((campaign.current_coins - campaign.initial_coins) / Math.max(campaign.initial_coins, 1)) *
         100
       ).toFixed(1)
     : '0.0'
-  const roiNum = parseFloat(roi)
+  const roiNum  = parseFloat(roi)
+  const netPnl  = campaign ? campaign.total_win - campaign.total_lose : 0
+  const totalResolved = wonCount + lostCount
+  const winRate = totalResolved > 0 ? Math.round((wonCount / totalResolved) * 100) : null
 
   return (
     <div className="flex flex-col gap-2" style={{ width: '180px' }}>
@@ -156,10 +162,29 @@ export default function StatsPanel({ campaign, fishCount, onTopUpClick }: StatsP
                   color="#f87171"
                 />
                 <Row
+                  label="💰 Net P&L"
+                  value={`${netPnl >= 0 ? '+' : ''}${netPnl.toLocaleString()}`}
+                  color={netPnl >= 0 ? '#4ade80' : '#f87171'}
+                />
+                <Row
                   label="📊 ROI"
                   value={`${roiNum >= 0 ? '+' : ''}${roi}%`}
                   color={roiNum >= 0 ? '#fbbf24' : '#f87171'}
                 />
+                {winRate !== null && (
+                  <Row
+                    label={`🎯 Win Rate`}
+                    value={`${winRate}% (${wonCount}W/${lostCount}L)`}
+                    color={winRate >= 50 ? '#4ade80' : '#f87171'}
+                  />
+                )}
+                {pendingCount > 0 && (
+                  <Row
+                    label="⏳ Pending"
+                    value={String(pendingCount)}
+                    color="#fbbf24"
+                  />
+                )}
               </div>
             </>
           ) : (

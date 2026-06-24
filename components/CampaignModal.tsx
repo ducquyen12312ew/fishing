@@ -36,6 +36,10 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
   const [editBalanceVal, setEditBalanceVal] = useState('')
   const [savingBalance, setSavingBalance]   = useState(false)
 
+  // reset state
+  const [confirmReset, setConfirmReset] = useState(false)
+  const [resetting, setResetting]       = useState(false)
+
   // merge state
   const [mergeMode, setMergeMode]     = useState(false)
   const [selected, setSelected]       = useState<Set<string>>(new Set())
@@ -94,6 +98,21 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
         onCampaignChange()
       }
     } catch { /* ignore */ }
+  }
+
+  async function resetAll() {
+    setResetting(true)
+    try {
+      const res = await fetch('/api/reset', { method: 'POST' })
+      if (res.ok) {
+        setCampaigns([])
+        onCampaignChange()
+        onClose()
+      }
+    } catch { /* ignore */ } finally {
+      setResetting(false)
+      setConfirmReset(false)
+    }
   }
 
   async function deleteCampaign(id: string) {
@@ -359,6 +378,39 @@ export default function CampaignModal({ onClose, onCampaignChange }: CampaignMod
                   </button>
                 </div>
               )}
+
+              {/* Reset all data */}
+              <div className="border-t border-white/10 pt-3 mt-2">
+                {confirmReset ? (
+                  <div className="bg-red-900/30 border border-red-500/50 rounded p-3 space-y-2">
+                    <p className="font-pixel text-red-400 text-xs text-center">
+                      ⚠️ Xoá toàn bộ data? Không thể hoàn tác!
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setConfirmReset(false)}
+                        className="flex-1 py-2 border border-white/30 text-white/50 font-pixel text-xs rounded"
+                      >
+                        Huỷ
+                      </button>
+                      <button
+                        onClick={resetAll}
+                        disabled={resetting}
+                        className="flex-1 py-2 bg-red-600 hover:bg-red-500 text-white font-pixel text-xs rounded border border-red-400 disabled:opacity-50"
+                      >
+                        {resetting ? 'Đang xoá...' : '🗑 Xác nhận Reset'}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => setConfirmReset(true)}
+                    className="w-full py-2 font-pixel text-xs text-red-400/60 hover:text-red-400 border border-red-500/20 hover:border-red-500/50 rounded transition-colors"
+                  >
+                    ⚠️ Reset toàn bộ data
+                  </button>
+                )}
+              </div>
 
               {campaigns.map((c) => (
                 <div

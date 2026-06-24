@@ -61,13 +61,11 @@ export async function PATCH(
       note:       `Edit result: ${bet.name} (${bet.status} → ${result})`,
     })
 
-    bet.status     = result
-    bet.resolvedAt = new Date()
-    await bet.save()
+    await Bet.findByIdAndUpdate(bet._id, { $set: { status: result, resolvedAt: new Date() } })
 
     return NextResponse.json({
       id:     String(bet._id),
-      status: bet.status,
+      status: result,
     })
   } catch (err) {
     console.error('[PATCH /api/bets/reresolve]', err)

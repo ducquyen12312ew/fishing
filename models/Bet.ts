@@ -24,6 +24,10 @@ const BetSchema = new Schema<IBet>({
   resolvedAt:  { type: Date },
 })
 
+BetSchema.index({ campaignId: 1, status: 1 })
+BetSchema.index({ campaignId: 1, createdAt: -1 })
+BetSchema.index({ campaignId: 1, resolvedAt: -1 })
+
 const Bet: Model<IBet> =
   mongoose.models.Bet ?? mongoose.model<IBet>('Bet', BetSchema)
 

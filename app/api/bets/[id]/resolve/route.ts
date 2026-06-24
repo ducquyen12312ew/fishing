@@ -26,9 +26,7 @@ export async function PATCH(
       )
     }
 
-    bet.status     = result
-    bet.resolvedAt = new Date()
-    await bet.save()
+    await Bet.findByIdAndUpdate(id, { $set: { status: result, resolvedAt: new Date() } })
 
     if (result === 'won') {
       const profit     = Math.round(bet.amount * (bet.odds - 1))
@@ -76,7 +74,7 @@ export async function PATCH(
       id:          String(bet._id),
       sport_emoji: bet.sportEmoji,
       fish_image:  bet.fishImage,
-      status:      bet.status,
+      status:      result,
       amount:      bet.amount,
       odds:        bet.odds,
     })
